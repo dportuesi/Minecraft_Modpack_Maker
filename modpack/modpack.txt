@@ -1,0 +1,7 @@
+modpackname=testmod
+installername=Minecraft Modpack Maker
+onlinetextfile=https://dl.dropboxusercontent.com/u/80548358/Modpack%20Test/modpack.txt
+onlinemodpackzip=https://dl.dropboxusercontent.com/u/80548358/Modpack%20Test/modpack.zip
+forgeversion=9.11.1.953
+mcversion=1.6.4
+version=1.0.1
