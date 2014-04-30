@@ -37,10 +37,9 @@ import org.apache.commons.io.IOUtils;
 public class InstallerFrame extends JFrame
 {
 	private JPanel contentPane;
-	private JProgressBar pbar;
 	
 	private static InstallerFrame instance = null;
-	
+		
 	/**
 	 * Launch the application.
 	 */
@@ -59,7 +58,7 @@ public class InstallerFrame extends JFrame
 			{
 				try 
 				{
-					int option = JOptionPane.showConfirmDialog(null, "Do you have forge installed? Download the installer for modpack version!", "Forge Download", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					int option = JOptionPane.showConfirmDialog(null, "Is Minecraft Forge-" + ModpackHandler.getForgeVersion() + " installed?", "Forge Download", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 					if(option == 0)
 					{
 						instance = new InstallerFrame();
@@ -67,8 +66,18 @@ public class InstallerFrame extends JFrame
 					}				
 					if(option == 1)
 					{
-						ModpackHandler.openWebpage(new URI("http://files.minecraftforge.net/"));
-						System.exit(0);
+						int option2 = JOptionPane.showConfirmDialog(null, "Download the installer for Forge-" + ModpackHandler.getForgeVersion() + "?", "Forge Download", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+						
+						if(option2 == 1)
+						{
+							System.exit(0);
+						}
+						
+						if(option2 == 0)
+						{
+							ModpackHandler.openWebpage(new URI("http://files.minecraftforge.net/"));
+							System.exit(0);
+						}
 					}					
 				} catch (Exception e) 
 				{
@@ -81,11 +90,6 @@ public class InstallerFrame extends JFrame
 	public static InstallerFrame getInstance()
 	{
 		return instance;
-	}
-	
-	public static void setInstance(InstallerFrame instanceName)
-	{
-		instance = instanceName;
 	}
 	
 	public InstallerFrame()
@@ -107,7 +111,7 @@ public class InstallerFrame extends JFrame
 		tane.setEditable(false);
 		tane.setBounds(126, 218, 921, 166);
 		texturePane.add(tane);
-
+		
 		final JLabel version = new JLabel("Current Version: " + ModpackHandler.getCurrentModpackVersion());
 		version.setBounds(480, 565, 411, 21);
 		contentPane.add(version);
@@ -147,6 +151,9 @@ public class InstallerFrame extends JFrame
 			{
 				try
 				{
+					PopupFrame p = new PopupFrame("Installing....");
+					p.setVisible(true);
+					
 					File dir = new File(ModpackHandler.minecraftDirString + ModpackHandler.getModpackName());
 					if(!dir.exists())
 					{
@@ -163,6 +170,7 @@ public class InstallerFrame extends JFrame
 					ZipFile zip = new ZipFile(ModpackHandler.modpackInfoDir + "modpack.zip");
 					zip.extractAll(ModpackHandler.minecraftDirString + ModpackHandler.getModpackName());
 					ModpackHandler.createLauncherProfile();
+					p.setVisible(false);
 					JOptionPane.showMessageDialog(InstallerFrame.getInstance(), "Successfully Installed!");
 				}
 				catch(Exception e2)
@@ -175,17 +183,15 @@ public class InstallerFrame extends JFrame
 		contentPane.add(install);
 		
 		final JButton newestVersion = new JButton("Download and Install Newest");
-		newestVersion.setToolTipText("Check online for the newest version");
+		newestVersion.setToolTipText("Check online for the newest version, download it, install it.");
 		newestVersion.setBounds(424,220, 225, 45);
 		newestVersion.addActionListener(new ActionListener() 
 		{
 			public void actionPerformed(ActionEvent e) 
-			{
-		        int downloaded = 1;
-		        
+			{		        
 				try 
 				{
-					if(!ModpackHandler.getCurrentModpackVersion().equals(ModpackHandler.getNewestVersion()))
+					if(ModpackHandler.getNewestVersion() != null && !ModpackHandler.getCurrentModpackVersion().equals(ModpackHandler.getNewestVersion()))
 					{
 						int option = JOptionPane.showConfirmDialog(InstallerFrame.getInstance(), "Newer Version of Modpack Detected! Would you like to install?", "Modpack Updater", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 						//yes
@@ -193,7 +199,11 @@ public class InstallerFrame extends JFrame
 						{
 							try
 							{
+								PopupFrame p = new PopupFrame("Downloading....");
+								p.setVisible(true);
+								
 								URL modpackUrl = new URL(ModpackHandler.getOnlineModpackZipLink());					
+								
 								File dir = new File(ModpackHandler.minecraftDirString + ModpackHandler.getModpackName());
 								if(!dir.exists())
 								{
@@ -204,49 +214,36 @@ public class InstallerFrame extends JFrame
 									dir.mkdirs();
 								}													
 								
-								//FileUtils.copyURLToFile(modpackUrl, new File(ModpackHandler.modpackInfoDir + "modpack.zip"));				        
-
-				        		pbar = new JProgressBar(0, 100);
-				                pbar.setValue(downloaded);
-				                pbar.setStringPainted(true);
-				                pbar.setBounds(500, 250, 200, 25);
-				                contentPane.add(pbar);
-				                
-				        		downloaded = ModpackHandler.downloadModpack(ModpackHandler.getOnlineModpackZipLink(), ModpackHandler.modpackInfoDir + "modpack.zip");
-				        					                
-				                /*
-						        ProgressMonitor progressMonitor = new ProgressMonitor(InstallerFrame.getInstance(), "Running a Long Task", "", 0, downloaded);
-						        String message = String.format("Completed %d%%.\n", downloaded);
-						        progressMonitor.setNote(message);
-						        progressMonitor.setProgress(downloaded);	
-						        */			                
-				        		
-				        		/*
-								DownloadFrame dframe = new DownloadFrame();
-								dframe.setVisible(true);
-								*/
-								
+								FileUtils.copyURLToFile(modpackUrl, new File(ModpackHandler.modpackInfoDir + "modpack.zip"));				
+				                								
 								if(dir.exists())
 								{
 									dir.delete();
 								}
+								
 								ZipFile zip = new ZipFile(ModpackHandler.modpackInfoDir + "modpack.zip");
 								zip.extractAll(ModpackHandler.minecraftDirString + ModpackHandler.getModpackName());
 								FileUtils.copyURLToFile(new URL(ModpackHandler.getOnlineTexfileLink()), new File(ModpackHandler.modpackInfoDir + "modpack.txt"));
 								version.setText("Current Version: " + ModpackHandler.getCurrentModpackVersion());
 								ModpackHandler.createLauncherProfile();
-								JOptionPane.showMessageDialog(InstallerFrame.getInstance(), "Successfully Installed!");
+								
+								p.setVisible(false);
+								JOptionPane.showMessageDialog(null, "Successfully Downloaded and Installed!");
 							}
 							catch(Exception e1)
 							{
-								JOptionPane.showMessageDialog(InstallerFrame.getInstance(), "Operation Failed.");
+								JOptionPane.showMessageDialog(null, "Operation Failed.");
 								e1.printStackTrace();
 							}
 						}
 					}
-					else if(ModpackHandler.getCurrentModpackVersion().equals(ModpackHandler.getNewestVersion())) 
+					else if(ModpackHandler.getNewestVersion() != null && ModpackHandler.getCurrentModpackVersion().equals(ModpackHandler.getNewestVersion())) 
 					{
-						JOptionPane.showMessageDialog(InstallerFrame.getInstance(), "Your modpack is up to date!");
+						JOptionPane.showMessageDialog(null, "Your modpack is up to date!");
+					}
+					else
+					{
+						JOptionPane.showMessageDialog(null, "Could not find any online modpack. Check internet connection.");
 					}
 				}
 				catch (Exception e1) 
@@ -285,6 +282,5 @@ public class InstallerFrame extends JFrame
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		fc.setSelectedFile(new File(ModpackHandler.minecraftDirString));
 		fc.updateUI();
-		//TODO Tidy up, ready for testing.
 	}
 }
